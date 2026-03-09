@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -23,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.yupi.usercenter.contant.UserConstant.ADMIN_ROLE;
 import static com.yupi.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -253,6 +253,53 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return true;
         }).map(this::getSafetyUser).collect(Collectors.toList());
 
+    }
+
+    @Override
+    public Integer updateUser(User user, User loginUser) {
+        long id = user.getId();
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        // 如果不是管理员，也不是当前用户，不允许更新
+        if (!isAdmin(loginUser) && id != loginUser.getId()) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+
+        User dbUser = userMapper.selectById(id);
+        if (dbUser == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        // 执行更新
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        // 从 session 中获取登录用户
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        if ( userObj == null ) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        return (User) userObj;
+    }
+
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        // 仅管理员可查询
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        return user != null && user.getUserRole() == ADMIN_ROLE;
+    }
+
+    @Override
+    public boolean isAdmin(User loginUser) {
+        // 仅管理员可查询
+        return loginUser != null && loginUser.getUserRole() == ADMIN_ROLE;
     }
 
 
