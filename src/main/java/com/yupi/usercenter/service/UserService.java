@@ -2,6 +2,7 @@ package com.yupi.usercenter.service;
 
 import com.yupi.usercenter.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import io.swagger.models.auth.In;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -60,4 +61,36 @@ public interface UserService extends IService<User> {
      * @return 用户列表
      */
     List<User> searchUserByTags(List<String> tagNameList);
+
+    /**
+     * 更新用户信息
+     *
+     * @param user
+     * @return
+     */
+    Integer updateUser(User user, User loginUser);
+
+
+    /**
+     * 获取当前登录用户
+     *
+     * @param request
+     * @return
+     */
+    User getLoginUser(HttpServletRequest request);
+
+    /**
+     * 是否为管理员
+     * @param request
+     * @return
+     */
+    boolean isAdmin(HttpServletRequest request);
+
+    /**
+     * 是否为管理员
+     *
+     * @param loginUser
+     * @return
+     */
+    boolean isAdmin(User loginUser);
 }
