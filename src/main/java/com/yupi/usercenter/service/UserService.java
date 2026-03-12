@@ -1,8 +1,10 @@
 package com.yupi.usercenter.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.usercenter.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import io.swagger.models.auth.In;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -93,4 +95,14 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean isAdmin(User loginUser);
+
+    /**
+     * 推荐用户
+     *
+     * @param pageNum
+     * @param pageSize
+     * @param request
+     * @return
+     */
+    Page<User> recommendUsers(int pageNum, int pageSize, HttpServletRequest request);
 }
