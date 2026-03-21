@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -19,6 +20,11 @@ public class TeamQuery extends PageRequest {
      * id
      */
     private Long id;
+
+    /**
+     * id集合
+     */
+    private List<Long> ids;
     /**
      * 搜索关键字 （同时对队伍名称和描述进行搜索）
      */

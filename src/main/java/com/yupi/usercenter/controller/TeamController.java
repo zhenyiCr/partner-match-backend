@@ -3,11 +3,13 @@ package com.yupi.usercenter.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.usercenter.common.BaseResponse;
+import com.yupi.usercenter.common.DeleteRequest;
 import com.yupi.usercenter.common.ErrorCode;
 import com.yupi.usercenter.common.ResultUtils;
 import com.yupi.usercenter.exception.BusinessException;
 import com.yupi.usercenter.model.domain.Team;
 import com.yupi.usercenter.model.domain.User;
+import com.yupi.usercenter.model.domain.UserTeam;
 import com.yupi.usercenter.model.dto.TeamQuery;
 import com.yupi.usercenter.model.request.TeamAddRequest;
 import com.yupi.usercenter.model.request.TeamJoinRequest;
@@ -16,6 +18,7 @@ import com.yupi.usercenter.model.request.TeamUpdateRequest;
 import com.yupi.usercenter.model.vo.TeamUserVO;
 import com.yupi.usercenter.service.TeamService;
 import com.yupi.usercenter.service.UserService;
+import com.yupi.usercenter.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +29,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 队伍接口
@@ -42,6 +46,8 @@ public class TeamController {
 
     @Resource
     private TeamService teamService;
+    @Resource
+    private UserTeamService userTeamService;
 
     @PostMapping("/add")
     public BaseResponse<Long> createTeam(@RequestBody TeamAddRequest teamAddRequest, HttpServletRequest request) {
@@ -61,12 +67,12 @@ public class TeamController {
     }
 
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteTeam(@RequestParam Long id, HttpServletRequest request) {
-        if (id == null || id <= 0) {
+    public BaseResponse<Boolean> deleteTeam(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+        if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(request);
-        boolean remove = teamService.deleteTeam(id, loginUser);
+        boolean remove = teamService.deleteTeam(deleteRequest.getId(), loginUser);
         if (!remove) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
         }
@@ -165,4 +171,45 @@ public class TeamController {
         }
         return ResultUtils.success(true);
     }
+
+    /**
+     * 获取用户创建的队伍
+     * @param teamQuery
+     * @param request
+     * @return
+     */
+    @GetMapping("/list/myTeam")
+    public BaseResponse<List<TeamUserVO>> listMyTeam(TeamQuery teamQuery, HttpServletRequest request) {
+        if (teamQuery == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        teamQuery.setUserId(loginUser.getId());
+
+        List<TeamUserVO> list = teamService.listTeam(teamQuery, true);
+        return ResultUtils.success(list);
+    }
+
+    /**
+     * 获取用户加入的队伍
+     * @param teamQuery
+     * @param request
+     * @return
+     */
+    @GetMapping("/list/JoinTeam")
+    public BaseResponse<List<TeamUserVO>> listJoinTeam(TeamQuery teamQuery, HttpServletRequest request) {
+        if (teamQuery == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", loginUser.getId());
+        List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
+        // 取出不重复的队伍id
+        List<Long> teamIdList = userTeamList.stream().map(UserTeam::getTeamId).distinct().collect(Collectors.toList());
+        teamQuery.setIds(teamIdList);
+        List<TeamUserVO> list = teamService.listTeam(teamQuery, true);
+        return ResultUtils.success(list);
+    }
+
 }

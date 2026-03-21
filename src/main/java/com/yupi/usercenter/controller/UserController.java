@@ -9,6 +9,7 @@ import com.yupi.usercenter.exception.BusinessException;
 import com.yupi.usercenter.model.domain.User;
 import com.yupi.usercenter.model.request.UserLoginRequest;
 import com.yupi.usercenter.model.request.UserRegisterRequest;
+import com.yupi.usercenter.model.vo.UserVO;
 import com.yupi.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -185,5 +186,20 @@ public class UserController {
         Page<User> userPage = userService.recommendUsers(pageNum,pageSize,request);
         return ResultUtils.success(userPage);
     }
+
+    /**
+     * 匹配用户
+     * @param request
+     * @return
+     */
+    @GetMapping("/match")
+    public BaseResponse<List<User>> matchUser(long num, HttpServletRequest request) {
+        if (num <= 0 || num > 5) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User currentUser = userService.getLoginUser(request);
+        return ResultUtils.success(userService.matchUsers(currentUser,num));
+    }
+
 
 }

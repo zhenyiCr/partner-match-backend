@@ -2,6 +2,7 @@ package com.yupi.usercenter.mapper;
 
 import com.yupi.usercenter.model.domain.Tag;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Select;
 
 /**
 * @author 联想
