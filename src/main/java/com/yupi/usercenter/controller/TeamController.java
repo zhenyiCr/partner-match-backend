@@ -1,5 +1,6 @@
 package com.yupi.usercenter.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.usercenter.common.BaseResponse;
@@ -29,6 +30,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -126,6 +128,21 @@ public class TeamController {
         }
         boolean isAdmin = userService.isAdmin(request);
         List<TeamUserVO> list = teamService.listTeam(teamQuery, isAdmin);
+        // 判断用户是否加入队伍
+        List<Long> teamIdList = list.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
+        try {
+            User loginUser = userService.getLoginUser(request);
+            queryWrapper.eq("user_id", loginUser.getId());
+            queryWrapper.in("team_id", teamIdList);
+            List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
+            Set<Long> isJoinTeamSet = userTeamList.stream().map(UserTeam::getId).collect(Collectors.toSet());
+            list.forEach(teamUserVO -> {
+                teamUserVO.setIsJoin(isJoinTeamSet.contains(teamUserVO.getId()));
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return ResultUtils.success(list);
     }
 

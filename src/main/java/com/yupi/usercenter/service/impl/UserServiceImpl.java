@@ -337,7 +337,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public List<User> matchUsers(long num, User loginUser) {
+    public List<User> matchUsers(User loginUser,long num) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("id", "tags");
         queryWrapper.isNotNull("tags");
@@ -368,7 +368,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 .limit(num)
                 .collect(Collectors.toList());
         // 原本顺序的 userId 列表
-        List<Long> userIdList = topUserPairList.stream().map(pair -> pair.getKey().getId()).collect(Collectors.toList());
+        List<Long> userIdList = topUserPairList.stream()
+                .map(pair -> pair.getKey().getId())
+                .collect(Collectors.toList());
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
         userQueryWrapper.in("id", userIdList);
         // 1, 3, 2
